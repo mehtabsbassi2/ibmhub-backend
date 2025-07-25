@@ -37,6 +37,6 @@ syncDB().then(()=>{
      })
 })
 
-// module.exports = serverless(app);
+module.exports = serverless(app);
 
 
