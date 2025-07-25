@@ -1,42 +1,46 @@
-const express = require('express')
-const serverless = require('serverless-http');
-const {syncDB,sequelize} = require("./models")
-const questionRoutes = require('./routes/questions');
-const userRoutes = require("./routes/users")
-const answerRoutes = require("./routes/answers")
-const voteRoutes = require("./routes/votes")
-const skillRoutes = require("./routes/skills")
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
+const { sequelize } = require("./models"); // Sequelize setup
 
+// Import routes
+const questionRoutes = require("./routes/questions");
+const userRoutes = require("./routes/users");
+const answerRoutes = require("./routes/answers");
+const voteRoutes = require("./routes/votes");
+const skillRoutes = require("./routes/skills");
 
-const app = express()
-const PORT = 5000;
-app.use(cors())
-app.use(express.json())
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.use("/api/users", userRoutes)
-app.use("/api/questions", questionRoutes)
-app.use("/api/answers", answerRoutes)
-app.use("/api/votes", voteRoutes)
-app.use("/api/skills",skillRoutes)
+// Middleware
+app.use(cors());
+app.use(express.json());
 
+// Routes
+app.use("/api/users", userRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/answers", answerRoutes);
+app.use("/api/votes", voteRoutes);
+app.use("/api/skills", skillRoutes);
 
+app.get("/", (req, res) => {
+res.send("✅ API is live on Render!");
+});
 
-
-app.get("/",(req,res)=>res.send("API is live!!!"));
-
+// Connect to database and start server
 sequelize.authenticate()
-  .then(() => console.log('✅ Connected to Supabase PostgreSQL'))
-  .catch(err => console.error('❌ Connection failed:', err));
+.then(() => {
+console.log("✅ Connected to Supabase PostgreSQL");
 
-
-syncDB().then(()=>{
-     app.listen(PORT,()=>{
-         console.log(`Server running on http://localhost:${PORT}`);
-     })
+return sequelize.sync(); // optional: auto sync models
 })
-
-//module.exports = serverless(app);
-
-
+.then(() => {
+app.listen(PORT, () => {
+console.log(`🚀 Server is running on port ${PORT}`);
+});
+})
+.catch((err) => {
+console.error("❌ Error connecting to database:", err);
+});
