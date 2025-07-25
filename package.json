@@ -1,25 +1,26 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vercel dev" 
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
-    "express": "^5.1.0",
-    "pg": "^8.16.3",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7",
-    "serverless-http": "^3.2.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
-  }
+"name": "backend",
+"version": "1.0.0",
+"main": "api/index.js",
+"scripts": {
+"dev": "vercel dev",
+"start": "node api/index.js",
+"test": "echo \"Error: no test specified\" && exit 1"
+},
+"keywords": [],
+"author": "Mehtabassi",
+"license": "MIT",
+"description": "Backend API for IBM Hub project",
+"dependencies": {
+"cors": "^2.8.5",
+"dotenv": "^17.2.0",
+"express": "^5.1.0",
+"pg": "^8.16.3",
+"pg-hstore": "^2.3.4",
+"sequelize": "^6.37.7",
+"serverless-http": "^3.2.0"
+},
+"devDependencies": {
+"nodemon": "^3.1.10"
+}
 }
