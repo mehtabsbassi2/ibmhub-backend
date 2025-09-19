@@ -1,4 +1,4 @@
-const {User,UserSkill, Question, Answer} = require("../models")
+const {User,UserSkill, UserTargetRole,Question, Answer} = require("../models")
 const { Op } = require('sequelize');
 
 //Post /api/auth/login
@@ -64,14 +64,28 @@ try {
 }
 }
 
-// GET /api/users/profile?=user@ibm.com
+// GET /api/users/profile/:email
 exports.getProfile = async (req, res) => {
   const { email } = req.params;
 
   if (!email) return res.status(400).json({ error: 'Email is required' });
 
   try {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({
+      where: { email },
+      include: [
+        {
+          model: UserTargetRole,
+          as: "targetRoles",
+          include: [
+            {
+              model: UserSkill,
+              as: "skills"
+            }
+          ]
+        }
+      ]
+    });
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -82,13 +96,34 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// GET /api/users/:id
 exports.getUserById = async (req, res) => {
   const id = req.params.id;
-  const user = await User.findByPk(id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json(user);
-};
 
+  try {
+    const user = await User.findByPk(id, {
+      include: [
+        {
+          model: UserTargetRole,
+          as: "targetRoles",
+          include: [
+            {
+              model: UserSkill,
+              as: "skills"
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (err) {
+    console.error('Get User by ID Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 // PUT /api/users/profile
 exports.updateProfile = async (req, res) => {
@@ -166,3 +201,4 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard data' });
   }
 };
+
