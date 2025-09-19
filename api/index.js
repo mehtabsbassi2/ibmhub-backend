@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-const { sequelize } = require("./models"); // Sequelize setup
+const { sequelize,syncDB } = require("./models"); // Sequelize setup
 
 // Import routes
 const questionRoutes = require("./routes/questions");
@@ -35,7 +35,7 @@ sequelize.authenticate()
   .then(() => {
     console.log("✅ Connected to Supabase PostgreSQL");
 
-    return sequelize.sync(); // optional: auto sync models
+   return syncDB(); // optional: auto sync models
   })
   .then(() => {
     app.listen(PORT, () => {
@@ -45,3 +45,4 @@ sequelize.authenticate()
   .catch((err) => {
     console.error("❌ Error connecting to database:", err);
   });
+
