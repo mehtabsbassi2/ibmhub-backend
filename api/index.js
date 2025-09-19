@@ -35,7 +35,7 @@ sequelize.authenticate()
   .then(() => {
     console.log("✅ Connected to Supabase PostgreSQL");
 
-   return syncDB(); // optional: auto sync models
+   return sequelize.sync(); // optional: auto sync models
   })
   .then(() => {
     app.listen(PORT, () => {
@@ -45,4 +45,5 @@ sequelize.authenticate()
   .catch((err) => {
     console.error("❌ Error connecting to database:", err);
   });
+
 
