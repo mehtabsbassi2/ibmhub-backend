@@ -1,46 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
-const { sequelize } = require("./models"); // Sequelize setup
-
-// Import routes
-const questionRoutes = require("./routes/questions");
-const userRoutes = require("./routes/users");
-const answerRoutes = require("./routes/answers");
-const voteRoutes = require("./routes/votes");
-const skillRoutes = require("./routes/skills");
+const { sequelize } = require("./models");
+const serverless = require("serverless-http"); // 👈 add this
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/users", userRoutes);
-app.use("/api/questions", questionRoutes);
-app.use("/api/answers", answerRoutes);
-app.use("/api/votes", voteRoutes);
-app.use("/api/skills", skillRoutes);
+app.use("/api/users", require("./routes/users"));
+app.use("/api/questions", require("./routes/questions"));
+app.use("/api/answers", require("./routes/answers"));
+app.use("/api/votes", require("./routes/votes"));
+app.use("/api/skills", require("./routes/skills"));
 
 app.get("/", (req, res) => {
-res.send("✅ API is live on Render!");
+  res.send("✅ API is live on Vercel!");
 });
 
-// Connect to database and start server
-sequelize.authenticate()
-.then(() => {
-console.log("✅ Connected to Supabase PostgreSQL");
+// DB connection (don’t block exports)
+sequelize
+  .authenticate()
+  .then(() => console.log("✅ Connected to Supabase PostgreSQL"))
+  .catch((err) => console.error("❌ DB connection failed:", err));
 
-return sequelize.sync(); // optional: auto sync models
-})
-.then(() => {
-app.listen(PORT, () => {
-console.log(`🚀 Server is running on port ${PORT}`);
-});
-})
-.catch((err) => {
-console.error("❌ Error connecting to database:", err);
-});
+// ❌ REMOVE app.listen()
+// ✅ Instead export as serverless handler
+module.exports = serverless(app);
