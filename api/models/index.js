@@ -27,7 +27,7 @@ Tag.belongsToMany(Question, { through: QuestionTag });
 
 const syncDB = async () => {
   try {
-    await sequelize.sync({ alter: true }); // Use force: true in dev to reset
+    await sequelize.sync(); // Use force: true in dev to reset
     console.log('All models were synchronized successfully.');
   } catch (error) {
     console.error('Error syncing models:', error);
@@ -46,3 +46,4 @@ module.exports = {
   QuestionTag,
   syncDB
 };
+
