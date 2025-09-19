@@ -8,6 +8,7 @@ const CareerProgress = require('./CareerProgress');
 const Vote = require('./Vote');
 const Tag = require('./Tag');
 const QuestionTag = require('./QuestionTag');
+const UserTargetRole = require("./UserTargetRole")
 
 
 // Associations
@@ -16,6 +17,12 @@ Answer.belongsTo(User, { as: "author" });
 Answer.belongsTo(Question, { as: "question" });
 UserSkill.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
 User.hasMany(UserSkill, { as: 'skills', foreignKey: 'authorId' });
+
+User.hasMany(UserTargetRole, { as: "targetRoles", foreignKey: "userId" });
+UserTargetRole.belongsTo(User, { as: "user", foreignKey: "userId" });
+
+UserTargetRole.hasMany(UserSkill, { as: "skills", foreignKey: "targetRoleId" });
+UserSkill.belongsTo(UserTargetRole, { as: "targetRole", foreignKey: "targetRoleId" });
 
 CareerProgress.belongsTo(User, { as: "author" });
 Vote.belongsTo(User, { as: "author" });
@@ -27,7 +34,7 @@ Tag.belongsToMany(Question, { through: QuestionTag });
 
 const syncDB = async () => {
   try {
-    await sequelize.sync(); // Use force: true in dev to reset
+    await sequelize.sync({ alter: true }); // Use force: true in dev to reset
     console.log('All models were synchronized successfully.');
   } catch (error) {
     console.error('Error syncing models:', error);
@@ -44,6 +51,8 @@ module.exports = {
   Vote,
   Tag,
   QuestionTag,
+  UserTargetRole,
   syncDB
 };
+
 
