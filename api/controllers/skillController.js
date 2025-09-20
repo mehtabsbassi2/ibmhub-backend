@@ -14,16 +14,41 @@ exports.getSkillsByUser = async (req, res) => {
   }
 };
 
+// GET all skills for a specific user + target role
+exports.getSkillsByUserAndTargetRole = async (req, res) => {
+  try {
+    const { userId, targetRoleId } = req.params;
+
+    if (!userId || !targetRoleId) {
+      return res.status(400).json({ message: "User ID and Target Role ID are required" });
+    }
+
+    const skills = await UserSkill.findAll({
+      where: { 
+        authorId: userId,
+        targetRoleId: targetRoleId
+      },
+      order: [["skill_name", "ASC"]],
+    });
+
+    res.status(200).json(skills);
+  } catch (error) {
+    console.error("Error fetching skills:", error);
+    res.status(500).json({ message: "Failed to retrieve skills" });
+  }
+};
+
+
 // POST new skills (from a string array of skill names)
 exports.addSkills = async (req, res) => {
   try {
-    const { authorId, skillNames } = req.body; // skillNames: string[]
-    if (!authorId || !Array.isArray(skillNames)) {
+    const { authorId,targetRoleId, skillNames } = req.body; // skillNames: string[]
+    if (!authorId || !targetRoleId || !Array.isArray(skillNames)) {
       return res.status(400).json({ message: "Invalid input" });
     }
 
     const existingSkills = await UserSkill.findAll({
-      where: { authorId },
+      where: { authorId,targetRoleId },
     });
 
     const existingNames = existingSkills.map((s) =>
@@ -36,6 +61,7 @@ exports.addSkills = async (req, res) => {
       )
       .map((name) => ({
         authorId,
+        targetRoleId,
         skill_name: name.trim(),
       }));
 
