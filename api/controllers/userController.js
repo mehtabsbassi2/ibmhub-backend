@@ -1,4 +1,4 @@
-const {User,UserSkill, UserTargetRole,Question, Answer} = require("../models")
+const {User,UserSkill,UserTargetRole, Question, Answer} = require("../models")
 const { Op } = require('sequelize');
 
 //Post /api/auth/login
@@ -43,7 +43,16 @@ exports.createUser = async (req, res) => {
       department,
       target_role,
       points: 0,
+      accountType:"USER"
     });
+
+    if (target_role) {
+      await UserTargetRole.create({
+        role_name: target_role,
+        timeline: timeline || null,
+        userId: user.id, // assumes association: User.hasMany(UserTargetRole)
+      });
+    }
 
     res.status(201).json(user);
   } catch (error) {
@@ -96,6 +105,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+
 // GET /api/users/:id
 exports.getUserById = async (req, res) => {
   const id = req.params.id;
@@ -125,6 +135,8 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+
+
 // PUT /api/users/profile
 exports.updateProfile = async (req, res) => {
   const { email,name, job_title, band_level, department, target_role,target_timeline } = req.body;
@@ -153,52 +165,206 @@ exports.updateProfile = async (req, res) => {
 };
 
 // GET /api/users/dashboard/:userId
+// exports.getDashboardData = async (req, res) => {
+//   const { userId } = req.params;
+
+//   if (!userId) {
+//     return res.status(400).json({ error: "Missing userId in request params" });
+//   }
+
+//   try {
+//     // 1. Fetch user with all target roles and their skills
+//     const user = await User.findByPk(userId, {
+//       attributes: ["id", "name", "points", "job_title", "target_timeline"],
+//       include: [
+//         {
+//           model: UserTargetRole,
+//           as: "targetRoles",
+//           attributes: ["id", "role_name", "timeline"],
+//           include: [
+//             {
+//               model: UserSkill,
+//               as: "skills",
+//               attributes: ["id", "skill_name", "level", "questions_answered", "votes_recieved"],
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // 2. For each target role, fetch relevant questions & answers
+//     const rolesWithProgress = user.targetRoles?.length
+//   ? await Promise.all(
+//       user.targetRoles.map(async (role) => {
+//         const skillNames = role.skills.map((s) => s.skill_name);
+
+//         const recentQuestions = await Question.findAll({
+//           where: { tags: { [Op.overlap]: skillNames } },
+//           order: [["createdAt", "DESC"]],
+//           limit: 5,
+//         });
+
+//         const recentAnswers = await Answer.findAll({
+//           where: { authorId: userId },
+//           include: [
+//             {
+//               model: Question,
+//               as: "question",
+//               attributes: ["id", "title", "tags"],
+//               where: { tags: { [Op.overlap]: skillNames } },
+//             },
+//           ],
+//           order: [["createdAt", "DESC"]],
+//           limit: 5,
+//         });
+
+//         return {
+//           ...role.toJSON(),
+//           recentQuestions,
+//           recentAnswers,
+//         };
+//       })
+//     )
+//   : [];
+
+//     // 3. Response payload
+//     res.json({
+//       user: {
+//         id: user.id,
+//         name: user.name,
+//         points: user.points,
+//         job_title: user.job_title,
+//         target_timeline: user.target_timeline,
+//       },
+//       roles: rolesWithProgress,
+//     });
+//   } catch (error) {
+//     console.error("Dashboard Fetch Error:", error);
+//     res.status(500).json({ error: "Failed to fetch dashboard data" });
+//   }
+// };
+
+// GET /api/users/dashboard/:userId
 exports.getDashboardData = async (req, res) => {
- const { userId } = req.params;
+  const { userId } = req.params;
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId in request params" });
   }
 
   try {
-    // Fetch user and skills
+    // 1. Fetch user with all target roles and their skills
     const user = await User.findByPk(userId, {
-      attributes: ['id', 'name', 'points', 'target_role','job_title',"target_timeline"]
+      attributes: ["id", "name", "points", "job_title", "target_timeline"],
+      include: [
+        {
+          model: UserTargetRole,
+          as: "targetRoles",
+          attributes: ["id", "role_name", "timeline"],
+          include: [
+            {
+              model: UserSkill,
+              as: "skills",
+              attributes: [
+                "id",
+                "skill_name",
+                "level",
+                "questions_answered",
+                "votes_recieved",
+              ],
+            },
+          ],
+        },
+      ],
     });
 
-    const skills = await UserSkill.findAll({
-      where: { authorId: userId },
-      attributes: ['skill_name', 'level', 'questions_answered', 'votes_recieved']
-    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const skillNames = skills.map(skill => skill.skill_name);
+    // 2. For each target role, fetch relevant questions & answers and compute role points
+    const rolesWithProgress = user.targetRoles?.length
+      ? await Promise.all(
+          user.targetRoles.map(async (role) => {
+            const skillNames = role.skills.map((s) => s.skill_name);
 
-    // Fetch latest questions tagged with any user skills
-    const recentQuestions = await Question.findAll({
-      where: {
-        tags: { [Op.overlap]: skillNames }
-      },
-      order: [['createdAt', 'DESC']],
-      limit: 5
-    });
+            // Recent questions tagged with this role's skills
+            const recentQuestions = await Question.findAll({
+              where: { tags: { [Op.overlap]: skillNames } },
+              order: [["createdAt", "DESC"]],
+              limit: 5,
+            });
 
-    // Fetch recent answers by user
-    const recentAnswers = await Answer.findAll({
-      where: { authorId: userId },
-      order: [['createdAt', 'DESC']],
-      limit: 5,
-      include: [{ model: Question, as: 'question', attributes: ['id', 'title'] }]
-    });
+            // Recent answers by this user on those skills
+            const recentAnswers = await Answer.findAll({
+              where: { authorId: userId },
+              include: [
+                {
+                  model: Question,
+                  as: "question",
+                  attributes: ["id", "title", "tags", "difficulty", "authorId"],
+                  where: { tags: { [Op.overlap]: skillNames } },
+                },
+              ],
+              order: [["createdAt", "DESC"]],
+              limit: 5,
+            });
 
+            // --- Compute role-specific points ---
+            let rolePoints = 0;
+
+            // From answers
+            for (const ans of recentAnswers) {
+              const diff = ans.question.difficulty;
+              if (diff === "Junior") rolePoints += 10;
+              if (diff === "Mid") rolePoints += 20;
+              if (diff === "Senior") rolePoints += 30;
+
+              // votes
+              rolePoints += (ans.votes || 0) * 2;
+
+              // accepted bonus (check answer itself)
+              if (ans.is_accepted) {
+                rolePoints += 25;
+              }
+            }
+
+            // From asking questions
+            for (const q of recentQuestions) {
+              if (q.authorId === userId) {
+                rolePoints += 5;
+              }
+            }
+
+            return {
+              ...role.toJSON(),
+              rolePoints, // <-- fixed field
+              recentQuestions,
+              recentAnswers,
+            };
+          })
+        )
+      : [];
+
+    // 3. Response payload
     res.json({
-      user,
-      skills,
-      recentQuestions,
-      recentAnswers
+      user: {
+        id: user.id,
+        name: user.name,
+        points: user.points, // total points
+        job_title: user.job_title,
+        target_timeline: user.target_timeline,
+      },
+      roles: rolesWithProgress,
     });
   } catch (error) {
-    console.error('Dashboard Fetch Error:', error);
-    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    console.error("Dashboard Fetch Error:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard data" });
   }
 };
+
 
