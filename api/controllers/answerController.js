@@ -1,35 +1,68 @@
 const { Answer, User, Question,UserSkill } = require('../models');
 
 // POST /api/answers
-exports.createAnswer = async (req, res) => {
-  const { content, authorId, questionId } = req.body;
+// exports.createAnswer = async (req, res) => {
+//   const { content, authorId, questionId } = req.body;
 
-  if (!content || !authorId || !questionId) {
-    return res.status(400).json({ error: 'Content, authorId, and questionId are required' });
+//   if (!content || !authorId || !questionId) {
+//     return res.status(400).json({ error: 'Content, authorId, and questionId are required' });
+//   }
+
+//   try {
+//     // 1. Create the answer
+//     const answer = await Answer.create({ content, authorId, questionId });
+
+//     // 2. Fetch the question to award points based on difficulty
+//     const question = await Question.findByPk(questionId);
+
+//     if (question?.difficulty) {
+//       let points = 10;
+//       if (question.difficulty === 'Junior') points = 10;
+//       else if (question.difficulty === 'Mid') points = 20;
+//       else if (question.difficulty === 'Senior') points = 30;
+
+//       await User.increment('points', { by: points, where: { id: authorId } });
+//     }
+
+//     res.status(201).json(answer);
+//   } catch (err) {
+//     console.error('Create Answer Error:', err);
+//     res.status(500).json({ error: 'Failed to create answer' });
+//   }
+// };
+
+exports.createAnswer = async (req, res) => {
+  const { content, authorId, questionId, targetRoleId } = req.body;
+
+  if (!content || !authorId || !questionId || !targetRoleId) {
+    return res.status(400).json({
+      error: "Content, authorId, questionId, and targetRoleId are required",
+    });
   }
 
   try {
     // 1. Create the answer
     const answer = await Answer.create({ content, authorId, questionId });
 
-    // 2. Fetch the question to access tags
+    // 2. Fetch the question to access difficulty & tags
     const question = await Question.findByPk(questionId);
-    let points = 10;
-    if (question && question.difficulty) {
-  if (question.difficulty === 'Junior') points = 10;
-  else if (question.difficulty === 'Mid') points = 20;
-  else if (question.difficulty === 'Senior') points = 30;
 
-  await User.increment('points', { by: points, where: { id: authorId } });
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
     }
 
-    if (question && Array.isArray(question.tags)) {
+    // 3. Award points to user
+    let points = 10;
+    if (question.difficulty === "Mid") points = 20;
+    else if (question.difficulty === "Senior") points = 30;
+
+    await User.increment("points", { by: points, where: { id: authorId } });
+
+    // 4. Update/Create skills for this role
+    if (Array.isArray(question.tags)) {
       for (const tag of question.tags) {
         const [skill, created] = await UserSkill.findOrCreate({
-          where: {
-            authorId,
-            skill_name: tag,
-          },
+          where: { authorId, skill_name: tag, targetRoleId },
           defaults: {
             level: 1,
             questions_answered: 1,
@@ -39,7 +72,7 @@ exports.createAnswer = async (req, res) => {
 
         if (!created) {
           skill.questions_answered += 1;
-          skill.level += 1; // 🔁 You can tweak leveling logic
+          skill.level += 1; // 🔁 tweak logic later (e.g. exp-based leveling)
           await skill.save();
         }
       }
@@ -47,10 +80,12 @@ exports.createAnswer = async (req, res) => {
 
     res.status(201).json(answer);
   } catch (err) {
-    console.error('Create Answer Error:', err);
-    res.status(500).json({ error: 'Failed to create answer' });
+    console.error("Create Answer Error:", err);
+    res.status(500).json({ error: "Failed to create answer" });
   }
 };
+
+
 
 // PUT /api/answers/:id
 exports.updateAnswer = async (req, res) => {
