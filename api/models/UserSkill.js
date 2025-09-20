@@ -9,8 +9,7 @@ const UserSkill = sequelize.define("UserSkill", {
   votes_recieved: { type: DataTypes.INTEGER, defaultValue: 0 },
   authorId: { type: DataTypes.STRING, allowNull: false },
    targetRoleId: { type: DataTypes.INTEGER, allowNull: true },
-});
+});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 
 
 module.exports = UserSkill;
-
