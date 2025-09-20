@@ -11,6 +11,9 @@ const userRoutes = require("./routes/users");
 const answerRoutes = require("./routes/answers");
 const voteRoutes = require("./routes/votes");
 const skillRoutes = require("./routes/skills");
+const targetRotes = require("./routes/userTargetRoles")
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +28,7 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/target-roles",targetRotes)
 
 app.get("/", (req, res) => {
   res.send("✅ API is live on Vercel!");
@@ -45,5 +49,6 @@ sequelize.authenticate()
   .catch((err) => {
     console.error("❌ Error connecting to database:", err);
   });
+
 
 
