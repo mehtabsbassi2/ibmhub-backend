@@ -11,6 +11,7 @@ const User = sequelize.define("User", {
   target_role: { type: DataTypes.STRING },
   target_timeline: { type: DataTypes.DATE },
   points: { type: DataTypes.INTEGER, defaultValue: 0 },
+  accountType: { type: DataTypes.STRING },
 },{timestamps:false});
 
 module.exports = User;
