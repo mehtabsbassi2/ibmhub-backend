@@ -6,47 +6,82 @@ exports.castVote = async (req, res) => {
   const { authorId, item_id, item_type, vote_type } = req.body;
 
   if (!authorId || !item_id || !item_type || !vote_type) {
-    return res.status(400).json({ error: 'Missing vote fields' });
+    return res.status(400).json({ error: "Missing vote fields" });
   }
 
-  if (!['question', 'answer'].includes(item_type) || !['upvote', 'downvote'].includes(vote_type)) {
-    return res.status(400).json({ error: 'Invalid vote type or item type' });
+  if (
+    !["question", "answer"].includes(item_type) ||
+    !["upvote", "downvote"].includes(vote_type)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Invalid vote type or item type" });
   }
 
   try {
-    const vote = await Vote.create({ authorId, item_id, item_type, vote_type });
-
-    const isUpvote = vote_type === 'upvote' ? 1 : -1;
-    const Model = item_type === 'question' ? Question : Answer;
+    const Model = item_type === "question" ? Question : Answer;
 
     const item = await Model.findByPk(item_id);
     if (!item) {
-      return res.status(404).json({ error: `${item_type} not found` });
+      return res
+        .status(404)
+        .json({ error: `${item_type} not found` });
     }
 
-    // Update vote count on question or answer
-    item.votes += isUpvote;
+    // Check if user already voted
+    const existingVote = await Vote.findOne({
+      where: { authorId, item_id, item_type },
+    });
+
+    if (existingVote) {
+      if (existingVote.vote_type === vote_type) {
+        // Same vote → reject
+        return res.status(400).json({
+          error: `You already ${vote_type}d this ${item_type}`,
+          userVote: existingVote.vote_type,
+          newVoteCount: item.votes,
+        });
+      }
+
+      // Opposite vote → remove old effect, add new effect
+      const oldEffect = existingVote.vote_type === "upvote" ? 1 : -1;
+      const newEffect = vote_type === "upvote" ? 1 : -1;
+
+      existingVote.vote_type = vote_type;
+      await existingVote.save();
+
+      item.votes = item.votes - oldEffect + newEffect;
+      await item.save();
+
+      return res.json({
+        message: "Vote updated",
+        userVote: vote_type,
+        newVoteCount: item.votes,
+      });
+    }
+
+    // New vote
+    await Vote.create({ authorId, item_id, item_type, vote_type });
+
+    const effect = vote_type === "upvote" ? 1 : -1;
+    item.votes += effect;
     await item.save();
 
-    // 🧠 Extra logic for answer: update UserSkill.votes_received based on related question tags
-    if (item_type === 'answer' && vote_type === 'upvote') {
+    // 🧠 Extra logic for answer upvotes
+    if (item_type === "answer" && vote_type === "upvote") {
       const answerAuthorId = item.authorId;
-        //SAVE POINTS
-       await User.increment('points', { by: 2, where: { id: item.authorId } });
-      // Find the related question
+      await User.increment("points", { by: 2, where: { id: answerAuthorId } });
+
       const question = await Question.findByPk(item.questionId);
       if (question && Array.isArray(question.tags)) {
         for (const tag of question.tags) {
           const [skill] = await UserSkill.findOrCreate({
-            where: {
-              authorId: answerAuthorId,
-              skill_name: tag
-            },
+            where: { authorId: answerAuthorId, skill_name: tag },
             defaults: {
               level: 1,
               questions_answered: 0,
-              votes_recieved: 1
-            }
+              votes_recieved: 1,
+            },
           });
 
           skill.votes_recieved += 1;
@@ -56,15 +91,17 @@ exports.castVote = async (req, res) => {
     }
 
     return res.status(201).json({
-      message: 'Vote recorded',
-      vote,
-      newVoteCount: item.votes
+      message: "Vote recorded",
+      userVote: vote_type,
+      newVoteCount: item.votes,
     });
   } catch (err) {
-    console.error('Cast Vote Error:', err);
-    return res.status(500).json({ error: 'Failed to cast vote' });
+    console.error("Cast Vote Error:", err);
+    return res.status(500).json({ error: "Failed to cast vote" });
   }
 };
+
+
 
 // GET /api/votes/count?item_id=1&item_type=question
 exports.getVoteCount = async (req, res) => {
