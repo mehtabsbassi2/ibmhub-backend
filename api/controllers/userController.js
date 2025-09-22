@@ -49,7 +49,6 @@ exports.createUser = async (req, res) => {
     if (target_role) {
       await UserTargetRole.create({
         role_name: target_role,
-        timeline: timeline || null,
         userId: user.id, // assumes association: User.hasMany(UserTargetRole)
       });
     }
