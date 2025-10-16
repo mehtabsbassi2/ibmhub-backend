@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-const { sequelize,syncDB } = require("./models"); // Sequelize setup
+const { sequelize, syncDB } = require("./models"); // Sequelize setup
 
 // Import routes
 const questionRoutes = require("./routes/questions");
@@ -12,8 +12,7 @@ const answerRoutes = require("./routes/answers");
 const voteRoutes = require("./routes/votes");
 const skillRoutes = require("./routes/skills");
 const targetRotes = require("./routes/userTargetRoles")
-
-
+const adminUserRoutes = require("./routes/adminUserRoutes")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +28,7 @@ app.use("/api/answers", answerRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/target-roles",targetRotes)
+app.use("/api/admin-users",adminUserRoutes)
 
 app.get("/", (req, res) => {
   res.send("✅ API is live on Vercel!");
@@ -39,7 +39,7 @@ sequelize.authenticate()
   .then(() => {
     console.log("✅ Connected to Supabase PostgreSQL");
 
-   return sequelize.sync(); // optional: auto sync models
+    return syncDB(); // optional: auto sync models
   })
   .then(() => {
     app.listen(PORT, () => {
@@ -49,6 +49,3 @@ sequelize.authenticate()
   .catch((err) => {
     console.error("❌ Error connecting to database:", err);
   });
-
-
-
