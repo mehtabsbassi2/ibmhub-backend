@@ -9,6 +9,8 @@ const Vote = require('./Vote');
 const Tag = require('./Tag');
 const QuestionTag = require('./QuestionTag');
 const UserTargetRole = require("./UserTargetRole")
+const AdminUser = require("./AdminUser"); // 👈 New import
+
 
 
 // Associations
@@ -17,6 +19,7 @@ Answer.belongsTo(User, { as: "author" });
 Answer.belongsTo(Question, { as: "question" });
 UserSkill.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
 User.hasMany(UserSkill, { as: 'skills', foreignKey: 'authorId' });
+
 
 User.hasMany(UserTargetRole, { as: "targetRoles", foreignKey: "userId" });
 UserTargetRole.belongsTo(User, { as: "user", foreignKey: "userId" });
@@ -31,6 +34,20 @@ Question.belongsToMany(Tag, { through: QuestionTag });
 Tag.belongsToMany(Question, { through: QuestionTag });
 
 // Ensure model imports are initialized and relationships are registered
+
+User.belongsToMany(User, {
+  through: AdminUser,
+  as: "ManagedUsers",   // admin → users they manage
+  foreignKey: "adminId",
+  otherKey: "userId",
+});
+
+User.belongsToMany(User, {
+  through: AdminUser,
+  as: "Admins",         // user → admins they belong to
+  foreignKey: "userId",
+  otherKey: "adminId",
+});
 
 const syncDB = async () => {
   try {
@@ -52,7 +69,6 @@ module.exports = {
   Tag,
   QuestionTag,
   UserTargetRole,
+  AdminUser,
   syncDB
 };
-
-
