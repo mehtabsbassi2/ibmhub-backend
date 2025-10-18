@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+const serverless = require('serverless-http');
 const { sequelize, syncDB } = require("./models"); // Sequelize setup
 
 // Import routes
@@ -35,17 +36,23 @@ app.get("/", (req, res) => {
 });
 
 // Connect to database and start server
-sequelize.authenticate()
-  .then(() => {
-    console.log("✅ Connected to Supabase PostgreSQL");
+// sequelize.authenticate()
+//   .then(() => {
+//     console.log("✅ Connected to Supabase PostgreSQL");
 
-    return syncDB(); // optional: auto sync models
-  })
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("❌ Error connecting to database:", err);
-  });
+//     return syncDB(); // optional: auto sync models
+//   })
+//   .then(() => {
+//     app.listen(PORT, () => {
+//       console.log(`🚀 Server is running on port ${PORT}`);
+//     });
+//   })
+//   .catch((err) => {
+//     console.error("❌ Error connecting to database:", err);
+//   });
+
+sequelize.authenticate()
+  .then(() => console.log("✅ Connected to Supabase PostgreSQL"))
+  .catch((err) => console.error("❌ Database connection failed:", err));
+
+module.exports.handler = serverless(app);
