@@ -1,4 +1,4 @@
-const { UserTargetRole } = require("../models");
+const { UserTargetRole,UserSkill } = require("../models");
 
 // ➕ Add a new target role for a user
 exports.addUserTargetRole = async (req, res) => {
@@ -55,6 +55,36 @@ exports.deleteUserTargetRole = async (req, res) => {
     res.json({ message: "Target role deleted successfully" });
   } catch (err) {
     console.error("❌ Error deleting user target role:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+// 📦 Get all target roles with their related skills for a user
+exports.getUserTargetRolesWithSkills = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const roles = await UserTargetRole.findAll({
+      where: { userId },
+      include: [
+        {
+          model: UserSkill,
+          as: "skills",
+          where: { authorId: userId },
+          required: false, // include even if no skills exist
+        },
+      ],
+      order: [["id", "ASC"]],
+    });
+
+    res.json(roles);
+  } catch (err) {
+    console.error("❌ Error fetching user target roles with skills:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
