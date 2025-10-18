@@ -11,4 +11,8 @@ router.get("/:userId", controller.getUserTargetRoles);
 // ❌ Delete target role by ID
 router.delete("/:id", controller.deleteUserTargetRole);
 
+router.get("/:userId/roles-with-skills", controller.getUserTargetRolesWithSkills);
+
+
+
 module.exports = router;
