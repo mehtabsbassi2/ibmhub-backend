@@ -13,14 +13,13 @@
 
 const { Sequelize } = require("sequelize");
 const pg = require("pg");
-
 const sequelize = new Sequelize(
-  "postgres",              // database name
-  "postgres",              // username
-  "@Ibmhub25",         // password (no @ symbol)
+  "postgres",
+  "postgres.vvllpxejmairizoagesv",
+  "@Ibmhub25",
   {
-    host: "db.vvllpxejmairizoagesv.supabase.co",
-    port: 5432,
+    host: "aws-0-eu-north-1.pooler.supabase.com",
+    port: 6543,
     dialect: "postgres",
     dialectModule: pg,
     dialectOptions: {
@@ -34,6 +33,7 @@ const sequelize = new Sequelize(
 );
 
 module.exports = sequelize;
+
 
 
 
