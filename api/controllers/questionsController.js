@@ -86,8 +86,7 @@ exports.getQuestions = async (req, res) => {
     });
   } catch (err) {
     console.error('Get Questions Error:', err);
-        res.status(500).json({ error: err.toString() });
-
+    res.status(500).json({ error: err.toString() });
   }
 };
 
@@ -523,5 +522,4 @@ exports.updateQuestion = async (req, res) => {
     res.status(500).json({ error: 'Failed to update question' });
   }
 };
-
 
