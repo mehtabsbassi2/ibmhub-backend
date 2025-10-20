@@ -60,7 +60,7 @@ exports.deleteUserTargetRole = async (req, res) => {
 };
 
 
-// 📦 Get all target roles with their related skills for a user
+//  Get all target roles with their related skills for a user
 exports.getUserTargetRolesWithSkills = async (req, res) => {
   try {
     const { userId } = req.params;
