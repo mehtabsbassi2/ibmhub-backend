@@ -39,7 +39,7 @@ exports.createUser = async (req, res) => {
       email,
       name,
       job_title,
-      band_level: parseInt(band_level),
+      band_level,
       department,
       target_role,
       points: 0,
