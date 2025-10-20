@@ -19,6 +19,7 @@ const sequelize = new Sequelize(
   "@Ibmhub25",
   {
     host: "aws-0-eu-north-1.pooler.supabase.com",
+    
     port: 5432,
     dialect: "postgres",
     dialectModule: pg,
@@ -33,6 +34,7 @@ const sequelize = new Sequelize(
 );
 
 module.exports = sequelize;
+
 
 
 
