@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
@@ -56,3 +56,4 @@ sequelize.authenticate()
   .catch((err) => console.error("❌ Database connection failed:", err));
 
 module.exports.handler = serverless(app);
+
