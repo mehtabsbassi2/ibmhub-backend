@@ -6,7 +6,7 @@ const User = sequelize.define("User", {
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   name: { type: DataTypes.STRING, allowNull: false },
   job_title: { type: DataTypes.STRING, allowNull: false },
-  band_level: { type: DataTypes.INTEGER, allowNull: false },
+  band_level: { type: DataTypes.STRING, allowNull: false },
   department: { type: DataTypes.STRING },
   target_role: { type: DataTypes.STRING },
   target_timeline: { type: DataTypes.DATE },
