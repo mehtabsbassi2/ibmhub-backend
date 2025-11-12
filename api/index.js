@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-// const serverless = require('serverless-http');
+const serverless = require('serverless-http');
 const { sequelize, syncDB } = require("./models"); // Sequelize setup
 
 // Import routes
@@ -14,15 +14,18 @@ const voteRoutes = require("./routes/votes");
 const skillRoutes = require("./routes/skills");
 const targetRotes = require("./routes/userTargetRoles")
 const adminUserRoutes = require("./routes/adminUserRoutes")
+const badgeRoutes = require("./routes/badgeRoutes");
+const seedBadges = require("./seeders/badgeSeeder");
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
@@ -31,16 +34,17 @@ app.use("/api/votes", voteRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/target-roles",targetRotes)
 app.use("/api/admin-users",adminUserRoutes)
+app.use("/api/badges", badgeRoutes);
 
 app.get("/", (req, res) => {
   res.send("✅ API is live on Vercel!");
 });
 
-// Connect to database and start server
+//Connect to database and start server
 sequelize.authenticate()
-  .then(() => {
+  .then(async() => {
     console.log("✅ Connected to Supabase PostgreSQL");
-
+    await seedBadges()
     return syncDB(); // optional: auto sync models
   })
   .then(() => {
@@ -57,11 +61,3 @@ sequelize.authenticate()
 //   .catch((err) => console.error("❌ Database connection failed:", err));
 
 // module.exports.handler = serverless(app);
-
-
-
-
-
-
-
-
