@@ -10,6 +10,8 @@ const Tag = require('./Tag');
 const QuestionTag = require('./QuestionTag');
 const UserTargetRole = require("./UserTargetRole")
 const AdminUser = require("./AdminUser"); // 👈 New import
+const Badge = require('./Badge');
+const UserBadge = require('./UserBadge');
 
 
 
@@ -23,6 +25,10 @@ User.hasMany(UserSkill, { as: 'skills', foreignKey: 'authorId' });
 
 User.hasMany(UserTargetRole, { as: "targetRoles", foreignKey: "userId" });
 UserTargetRole.belongsTo(User, { as: "user", foreignKey: "userId" });
+
+
+User.belongsToMany(Badge, { through: UserBadge, as: "badges", foreignKey: "userId" });
+Badge.belongsToMany(User, { through: UserBadge, as: "users", foreignKey: "badgeId" });
 
 UserTargetRole.hasMany(UserSkill, { as: "skills", foreignKey: "targetRoleId" });
 UserSkill.belongsTo(UserTargetRole, { as: "targetRole", foreignKey: "targetRoleId" });
@@ -70,5 +76,7 @@ module.exports = {
   QuestionTag,
   UserTargetRole,
   AdminUser,
+  Badge,
+  UserBadge,
   syncDB
 };
