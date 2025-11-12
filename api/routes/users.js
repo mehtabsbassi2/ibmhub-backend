@@ -11,5 +11,8 @@ router.get("/:id",userController.getUserById)
 router.get('/profile/:email', userController.getProfile);
 router.put('/profile/:email', userController.updateProfile);
 router.get('/dashboard/:userId',userController.getDashboardData)
+router.put("/toggle-admin/:id", userController.toggleAdmin);
+router.put("/:userId/points", userController.updateUserPoints);
+
 
 module.exports = router;
