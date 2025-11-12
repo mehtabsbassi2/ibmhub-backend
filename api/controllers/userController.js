@@ -1,5 +1,6 @@
 const {User,UserSkill,UserTargetRole, Question, Answer} = require("../models")
 const { Op } = require('sequelize');
+const { autoAwardBadges } = require("./badgeController");
 
 //Post /api/auth/login
 exports.login = async (req,res)=>{
@@ -59,6 +60,35 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ error: 'Failed to create user' });
   }
 };
+
+// PUT /api/users/toggle-admin/:id
+exports.toggleAdmin = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) return res.status(400).json({ error: "User ID is required" });
+
+  try {
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Toggle between USER and ADMIN
+    user.accountType = user.accountType === "ADMIN" ? "USER" : "ADMIN";
+
+    await user.save();
+
+    res.status(200).json({
+      message: `User role updated successfully`,
+      user,
+    });
+  } catch (error) {
+    console.error("Toggle Admin Error:", error);
+    res.status(500).json({ error: "Failed to toggle user role" });
+  }
+};
+
 
 
 //Get all users
@@ -163,89 +193,27 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// GET /api/users/dashboard/:userId
-// exports.getDashboardData = async (req, res) => {
-//   const { userId } = req.params;
+exports.updateUserPoints = async (req, res) => {
+  const { userId } = req.params;
+  const { newPoints } = req.body;
 
-//   if (!userId) {
-//     return res.status(400).json({ error: "Missing userId in request params" });
-//   }
+  
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-//   try {
-//     // 1. Fetch user with all target roles and their skills
-//     const user = await User.findByPk(userId, {
-//       attributes: ["id", "name", "points", "job_title", "target_timeline"],
-//       include: [
-//         {
-//           model: UserTargetRole,
-//           as: "targetRoles",
-//           attributes: ["id", "role_name", "timeline"],
-//           include: [
-//             {
-//               model: UserSkill,
-//               as: "skills",
-//               attributes: ["id", "skill_name", "level", "questions_answered", "votes_recieved"],
-//             },
-//           ],
-//         },
-//       ],
-//     });
+    user.points = newPoints;
+    await user.save();
 
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
+    await autoAwardBadges(userId, newPoints);
 
-//     // 2. For each target role, fetch relevant questions & answers
-//     const rolesWithProgress = user.targetRoles?.length
-//   ? await Promise.all(
-//       user.targetRoles.map(async (role) => {
-//         const skillNames = role.skills.map((s) => s.skill_name);
+    res.json({ message: "Points updated and badges checked", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update points" });
+  }
+};
 
-//         const recentQuestions = await Question.findAll({
-//           where: { tags: { [Op.overlap]: skillNames } },
-//           order: [["createdAt", "DESC"]],
-//           limit: 5,
-//         });
-
-//         const recentAnswers = await Answer.findAll({
-//           where: { authorId: userId },
-//           include: [
-//             {
-//               model: Question,
-//               as: "question",
-//               attributes: ["id", "title", "tags"],
-//               where: { tags: { [Op.overlap]: skillNames } },
-//             },
-//           ],
-//           order: [["createdAt", "DESC"]],
-//           limit: 5,
-//         });
-
-//         return {
-//           ...role.toJSON(),
-//           recentQuestions,
-//           recentAnswers,
-//         };
-//       })
-//     )
-//   : [];
-
-//     // 3. Response payload
-//     res.json({
-//       user: {
-//         id: user.id,
-//         name: user.name,
-//         points: user.points,
-//         job_title: user.job_title,
-//         target_timeline: user.target_timeline,
-//       },
-//       roles: rolesWithProgress,
-//     });
-//   } catch (error) {
-//     console.error("Dashboard Fetch Error:", error);
-//     res.status(500).json({ error: "Failed to fetch dashboard data" });
-//   }
-// };
 
 // GET /api/users/dashboard/:userId
 exports.getDashboardData = async (req, res) => {
