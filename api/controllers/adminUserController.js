@@ -121,6 +121,16 @@ exports.getAvailableUsersForAdmin = async (req, res) => {
         "target_role",
         "points",
       ],
+
+      // ⭐ ADD BADGES FOR EACH USER
+      include: [
+        {
+          model: Badge,
+          as: "badges",
+          attributes: ["id", "name", "description", "image"],
+          through: { attributes: ["awardedAt"] }
+        }
+      ]
     });
 
     return res.status(200).json(availableUsers);
