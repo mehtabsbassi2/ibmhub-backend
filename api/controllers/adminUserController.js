@@ -1,4 +1,4 @@
-const { AdminUser, User } = require("../models");
+const { AdminUser, User, Badge } = require("../models");
 
 // Add a user to an admin's list
 exports.addUserToAdmin = async (req, res) => {
@@ -53,9 +53,28 @@ exports.getUsersForAdmin = async (req, res) => {
       include: {
         model: User,
         as: "ManagedUsers",
-        attributes: ["id", "name", "email", "job_title", "department", "band_level","target_role","points"],
-        through: { attributes: [] }, // exclude join table columns
-      },
+        attributes: [
+          "id",
+          "name",
+          "email",
+          "job_title",
+          "department",
+          "band_level",
+          "target_role",
+          "points"
+        ],
+        through: { attributes: [] }, 
+
+        // ⭐ ADD BADGES FOR EACH USER
+        include: [
+          {
+            model: Badge,
+            as: "badges",
+            attributes: ["id", "name", "description", "image"],
+            through: { attributes: ["awardedAt"] }
+          }
+        ]
+      }
     });
 
     if (!admin)
@@ -67,6 +86,7 @@ exports.getUsersForAdmin = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 // Get users who are NOT managed by a specific admin
 exports.getAvailableUsersForAdmin = async (req, res) => {
