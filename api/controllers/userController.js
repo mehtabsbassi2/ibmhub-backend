@@ -22,7 +22,7 @@ exports.login = async (req,res)=>{
 
 // POST /api/users
 exports.createUser = async (req, res) => {
-  const { id, email, name, job_title, band_level, department, target_role } = req.body;
+  const { id, email, name, job_title, band_level, department, target_role,accountType } = req.body;
 
   if (!id || !email || !name || !job_title || !band_level) {
     return res.status(400).json({ error: 'id, email, name, job title and band level are required' });
@@ -44,7 +44,7 @@ exports.createUser = async (req, res) => {
       department,
       target_role,
       points: 0,
-      accountType:"USER"
+      accountType
     });
 
     if (target_role) {
