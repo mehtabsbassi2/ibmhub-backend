@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 const User = require('./User');
 
-const AdminUser = sequelize.define('AdminUser', {
+const AdminUser = sequelize.define('ManagerAssignment', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   adminId: {
     type: DataTypes.STRING,
