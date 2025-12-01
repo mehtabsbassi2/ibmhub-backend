@@ -59,6 +59,34 @@ exports.deleteUserTargetRole = async (req, res) => {
   }
 };
 
+// ✏️ Update (edit) a target role by ID
+exports.editUserTargetRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role_name, timeline } = req.body;
+
+    // Check if record exists
+    const targetRole = await UserTargetRole.findByPk(id);
+
+    if (!targetRole) {
+      return res.status(404).json({ error: "Target role not found" });
+    }
+
+    // Update allowed fields
+    await targetRole.update({
+      role_name: role_name ?? targetRole.role_name,
+      timeline: timeline ?? targetRole.timeline,
+    });
+
+    res.json({
+      message: "Target role updated successfully",
+      updated: targetRole,
+    });
+  } catch (err) {
+    console.error("❌ Error updating target role:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 //  Get all target roles with their related skills for a user
 exports.getUserTargetRolesWithSkills = async (req, res) => {
@@ -88,3 +116,4 @@ exports.getUserTargetRolesWithSkills = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
