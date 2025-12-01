@@ -13,6 +13,7 @@ router.delete("/:id", controller.deleteUserTargetRole);
 
 router.get("/:userId/roles-with-skills", controller.getUserTargetRolesWithSkills);
 
-
+router.put("/:id", controller.editUserTargetRole);
 
 module.exports = router;
+
