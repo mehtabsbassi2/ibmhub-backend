@@ -1,4 +1,4 @@
-const { Question, User,UserSkill, Answer, Tag } = require('../models');
+const { Question, User,UserSkill, Answer } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
 
 
