@@ -6,8 +6,7 @@ const Answer = require('./Answer');
 const UserSkill = require('./UserSkill');
 const CareerProgress = require('./CareerProgress');
 const Vote = require('./Vote');
-const Tag = require('./Tag');
-const QuestionTag = require('./QuestionTag');
+
 const UserTargetRole = require("./UserTargetRole")
 const AdminUser = require("./AdminUser"); // 👈 New import
 const Badge = require('./Badge');
@@ -36,8 +35,7 @@ UserSkill.belongsTo(UserTargetRole, { as: "targetRole", foreignKey: "targetRoleI
 CareerProgress.belongsTo(User, { as: "author" });
 Vote.belongsTo(User, { as: "author" });
 
-Question.belongsToMany(Tag, { through: QuestionTag });
-Tag.belongsToMany(Question, { through: QuestionTag });
+
 
 // Ensure model imports are initialized and relationships are registered
 
@@ -72,8 +70,6 @@ module.exports = {
   UserSkill,
   CareerProgress,
   Vote,
-  Tag,
-  QuestionTag,
   UserTargetRole,
   AdminUser,
   Badge,
