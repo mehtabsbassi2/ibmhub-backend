@@ -35,15 +35,22 @@ exports.castVote = async (req, res) => {
 
     if (existingVote) {
       if (existingVote.vote_type === vote_type) {
-        // Same vote → reject
-        return res.status(400).json({
-          error: `You already ${vote_type}d this ${item_type}`,
-          userVote: existingVote.vote_type,
+        // Same vote → REMOVE IT (toggle behavior)
+        const effect = existingVote.vote_type === "upvote" ? -1 : 1;
+        
+        await existingVote.destroy();
+        
+        item.votes += effect;
+        await item.save();
+
+        return res.json({
+          message: "Vote removed",
+          userVote: null,
           newVoteCount: item.votes,
         });
       }
 
-      // Opposite vote → remove old effect, add new effect
+      // Opposite vote → switch vote
       const oldEffect = existingVote.vote_type === "upvote" ? 1 : -1;
       const newEffect = vote_type === "upvote" ? 1 : -1;
 
