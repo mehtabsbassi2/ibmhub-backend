@@ -259,14 +259,14 @@ exports.getDashboardData = async (req, res) => {
           user.targetRoles.map(async (role) => {
             const skillNames = role.skills.map((s) => s.skill_name);
 
-            // Recent questions tagged with this role's skills
+            // Recent questions tagged with this role's skills (for display)
             const recentQuestions = await Question.findAll({
               where: { tags: { [Op.overlap]: skillNames } },
               order: [["createdAt", "DESC"]],
               limit: 5,
             });
 
-            // Recent answers by this user on those skills
+            // Recent answers by this user (for display)
             const recentAnswers = await Answer.findAll({
               where: { authorId: userId },
               include: [
@@ -281,11 +281,25 @@ exports.getDashboardData = async (req, res) => {
               limit: 5,
             });
 
-            // --- Compute role-specific points ---
+            // --- Compute role-specific points (fetch ALL answers, no limit) ---
+            const allRoleAnswers = await Answer.findAll({
+              where: { authorId: userId },
+              attributes: ["votes", "is_accepted"],
+              include: [
+                {
+                  model: Question,
+                  as: "question",
+                  attributes: ["difficulty"],
+                  where: { tags: { [Op.overlap]: skillNames } },
+                  required: true,
+                },
+              ],
+            });
+
             let rolePoints = 0;
 
-            // From answers
-            for (const ans of recentAnswers) {
+            // Calculate points from ALL answers
+            for (const ans of allRoleAnswers) {
               const diff = ans.question.difficulty;
               if (diff === "Junior") rolePoints += 10;
               if (diff === "Mid") rolePoints += 20;
@@ -294,24 +308,28 @@ exports.getDashboardData = async (req, res) => {
               // votes
               rolePoints += (ans.votes || 0) * 2;
 
-              // accepted bonus (check answer itself)
+              // accepted bonus
               if (ans.is_accepted) {
                 rolePoints += 25;
               }
             }
 
-            // From asking questions
-            for (const q of recentQuestions) {
-              if (q.authorId === userId) {
-                rolePoints += 5;
-              }
-            }
+            // Get ALL questions by user in this role for points
+            const allRoleQuestions = await Question.findAll({
+              where: {
+                authorId: userId,
+                tags: { [Op.overlap]: skillNames },
+              },
+              attributes: ["id"],
+            });
+
+            rolePoints += allRoleQuestions.length * 5;
 
             return {
               ...role.toJSON(),
-              rolePoints, // <-- fixed field
-              recentQuestions,
-              recentAnswers,
+              rolePoints,
+              recentQuestions, // only 5 for display
+              recentAnswers,   // only 5 for display
             };
           })
         )
@@ -333,5 +351,4 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch dashboard data" });
   }
 };
-
 
